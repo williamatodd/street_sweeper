@@ -944,6 +944,7 @@ module StreetAddress
         s += prefix + " " unless prefix.nil?
         s += street + " " unless street.nil?
         s += street_type unless street_type.nil?
+        s += suffix unless suffix.nil?
         s.strip
       end
 
