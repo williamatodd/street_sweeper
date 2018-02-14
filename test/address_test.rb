@@ -27,7 +27,7 @@ class AddressTest < MiniTest::Test
     },
     '1005 N Gravenstein Highway, Suite 500, Sebastopol, CA' => {
       street_address_1: '1005 N Gravenstein Hwy',
-      street_address_2: 'Suite 500',
+      street_address_2: 'Ste 500',
       line1: '1005 N Gravenstein Hwy Ste 500',
       line2: 'Sebastopol, CA'
     },
