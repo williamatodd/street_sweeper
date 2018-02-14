@@ -1,7 +1,8 @@
-require 'minitest/autorun'
-require 'street_address'
+# frozen_string_literal: true
 
-class StreetAddressUsTest < MiniTest::Test
+require 'spec_helper'
+
+RSpec.describe StreetAddress::US do
   ADDRESSES = {
     '1005 Gravenstein Hwy 95472' => {
       number: '1005',
@@ -529,129 +530,100 @@ class StreetAddressUsTest < MiniTest::Test
     '1005 N Gravenstein Hwy Sebastopol',
     '1005 N Gravenstein Hwy Sebastopol CZ',
     'Gravenstein Hwy 95472',
-    'E1005 Gravenstein Hwy 95472',
-    # "1005E Gravenstein Hwy 95472"
+    'E1005 Gravenstein Hwy 95472'
   ].freeze
 
-  def test_address_parsing
+  describe '#parse' do
     ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      compare_expected_to_actual_hash(expected, addr.to_h, address)
-      assert_equal false, addr.intersection?
+      it "with valid address: #{address}" do
+        addr = StreetAddress::US.parse(address)
+        compare_expected_to_actual_hash(expected, addr.to_h, address)
+        expect(addr.intersection?).to be_falsey
+      end
     end
-  end
 
-  def test_informal_address_parsing
     INFORMAL_ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address, informal: true)
-      compare_expected_to_actual_hash(expected, addr.to_h, address)
+      it "with valid informal address: #{address}" do
+        addr = StreetAddress::US.parse(address, informal: true)
+        compare_expected_to_actual_hash(expected, addr.to_h, address)
+      end
     end
-  end
 
-  def test_intersection_address_parsing
     INTERSECTIONS.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      compare_expected_to_actual_hash(expected, addr.to_h, address)
-      assert_equal true, addr.intersection?
+      it "with valid intersection: #{address}" do
+        addr = StreetAddress::US.parse(address)
+        compare_expected_to_actual_hash(expected, addr.to_h, address)
+        expect(addr.intersection?).to be_truthy
+      end
+    end
+
+    it 'with valid zip plus 4 with dash' do
+      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 22206-3333')
+      expect(addr.postal_code_ext).to eq('3333')
+    end
+
+    it 'with valid zip plus 4 without dash' do
+      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444')
+      expect(addr.postal_code_ext).to eq('4444')
+    end
+
+    it 'with invalid addresses' do
+      EXPECTED_FAILURES.each do |address|
+        parsed_address = StreetAddress::US.parse(address)
+        expect(parsed_address).not_to eq(parsed_address.state)
+      end
+    end
+
+    context 'avoid_redundant_street_type: true' do
+      it 'street_type_is_nil_for_road_redundant_street_types' do
+        address = '36401 County Road 43, Eaton, CO 80615'
+        expected_results = {
+          number: '36401',
+          street: 'County Road 43',
+          city: 'Eaton',
+          state: 'CO',
+          postal_code: '80615',
+          street_type: nil
+        }
+        parsed_address = StreetAddress::US.parse(address, avoid_redundant_street_type: true)
+        compare_expected_to_actual_hash(expected_results, parsed_address.to_h, address)
+      end
+    end
+
+    context 'with informal: true' do
+      it 'and a valid normal address' do
+        a = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444', informal: true)
+        expect(a.number).to eq('2730')
+        expect(a.prefix).to eq('S')
+        expect(a.street).to eq('Veitch')
+        expect(a.street_type).to eq('St')
+        expect(a.city).to eq('Arlington')
+        expect(a.state).to eq('VA')
+        expect(a.postal_code).to eq('22206')
+        expect(a.postal_code_ext).to eq('4444')
+      end
+
+      it 'and a valid informal address' do
+        a = StreetAddress::US.parse('2730 S Veitch St', informal: true)
+        expect(a.number).to eq('2730')
+        expect(a.prefix).to eq('S')
+        expect(a.street).to eq('Veitch')
+        expect(a.street_type).to eq('St')
+      end
+
+      it 'and a valid informal address with trailing words' do
+        a = StreetAddress::US.parse('2730 S Veitch St in the south of arlington', informal: true)
+        expect(a.number).to eq('2730')
+        expect(a.prefix).to eq('S')
+        expect(a.street).to eq('Veitch')
+        expect(a.street_type).to eq('St')
+      end
     end
   end
 
-  def test_expected_failures
-    EXPECTED_FAILURES.each do |address|
-      parsed_address = StreetAddress::US.parse(address)
-      assert !parsed_address || !parsed_address.state
-    end
-  end
-
-  def test_street_type_is_nil_for_road_redundant_street_types
-    address = '36401 County Road 43, Eaton, CO 80615'
-    expected_results = {
-      number: '36401',
-      street: 'County Road 43',
-      city: 'Eaton',
-      state: 'CO',
-      postal_code: '80615',
-      street_type: nil
-    }
-    parsed_address = StreetAddress::US.parse(address, avoid_redundant_street_type: true)
-    compare_expected_to_actual_hash(expected_results, parsed_address.to_h, address)
-  end
-
-  def test_zip_plus_4_with_dash
-    addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 22206-3333')
-    assert_equal '3333', addr.postal_code_ext
-  end
-
-  def test_zip_plus_4_without_dash
-    addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444')
-    assert_equal '4444', addr.postal_code_ext
-  end
-
-  def test_informal_parse_normal_address
-    a = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444', informal: true)
-    assert_equal '2730', a.number
-    assert_equal 'S', a.prefix
-    assert_equal 'Veitch', a.street
-    assert_equal 'St', a.street_type
-    assert_equal 'Arlington', a.city
-    assert_equal 'VA', a.state
-    assert_equal '22206', a.postal_code
-    assert_equal '4444', a.postal_code_ext
-  end
-
-  def test_informal_parse_informal_address
-    a = StreetAddress::US.parse('2730 S Veitch St', informal: true)
-    assert_equal '2730', a.number
-    assert_equal 'S', a.prefix
-    assert_equal 'Veitch', a.street
-    assert_equal 'St', a.street_type
-  end
-
-  def test_informal_parse_informal_address_trailing_words
-    a = StreetAddress::US.parse('2730 S Veitch St in the south of arlington', informal: true)
-    assert_equal '2730', a.number
-    assert_equal 'S', a.prefix
-    assert_equal 'Veitch', a.street
-    assert_equal 'St', a.street_type
-  end
-
-  def test_parse
-    assert_nil StreetAddress::US.parse('&')
-    assert_nil StreetAddress::US.parse(' and ')
-
-    parseable = [
-      '1600 Pennsylvania Ave Washington DC 20006',
-      '1600 Pennsylvania Ave #400, Washington, DC, 20006',
-      '1600 Pennsylvania Ave Washington, DC',
-      '1600 Pennsylvania Ave #400 Washington DC',
-      '1600 Pennsylvania Ave, 20006',
-      '1600 Pennsylvania Ave #400, 20006',
-      '1600 Pennsylvania Ave 20006',
-      '1600 Pennsylvania Ave #400 20006',
-      'Hollywood & Vine, Los Angeles, CA',
-      'Hollywood Blvd and Vine St, Los Angeles, CA',
-      'Mission Street at Valencia Street, San Francisco, CA',
-      'Hollywood & Vine, Los Angeles, CA, 90028',
-      'Hollywood Blvd and Vine St, Los Angeles, CA, 90028',
-      'Mission Street at Valencia Street, San Francisco, CA, 90028'
-    ]
-
-    parseable.each do |location|
-      assert(StreetAddress::US.parse(location), location + ' was not parseable')
-    end
-  end
-
-  def test_comparison
-    addr = StreetAddress::US.parse(ADDRESSES.first[0])
-    assert_equal addr, '1005 Gravenstein Hwy, 95472'
-    assert_equal addr, StreetAddress::US.parse(ADDRESSES.first[0])
-    refute_equal addr, StreetAddress::US.parse(EXPECTED_FAILURES.first)
-    refute_equal addr, nil
-  end
-
-  def compare_expected_to_actual_hash(expected, actual, address)
+  def compare_expected_to_actual_hash(expected, actual, _address)
     expected.each_pair do |expected_key, expected_value|
-      assert_equal expected_value, actual[expected_key], "For address '#{address}',  #{actual[expected_key]} != #{expected_value}"
+      expect(actual[expected_key]).to eq(expected_value)
     end
   end
 end

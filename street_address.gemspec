@@ -21,6 +21,6 @@ A port of Geo::StreetAddress::US by Schuyler D. Erle and Tim Bunce.
 desc
 
   s.add_development_dependency 'bundler'
-  s.add_development_dependency 'minitest'
   s.add_development_dependency 'rake'
+  s.add_development_dependency 'rspec'
 end

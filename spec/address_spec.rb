@@ -1,7 +1,8 @@
-require 'minitest/autorun'
-require 'street_address'
+# frozen_string_literal: true
 
-class AddressTest < MiniTest::Test
+require 'spec_helper'
+
+RSpec.describe StreetAddress::US::Address do
   ADDRESSES = {
     '1005 Gravenstein Hwy 95472' => {
       line1: '1005 Gravenstein Hwy',
@@ -146,10 +147,10 @@ class AddressTest < MiniTest::Test
       street_address_2: ''
     },
     'One East 161st Street Suite 10, Bronx, NY 10451' => {
-      line1: 'One East 161st St Suite 10',
+      line1: 'One East 161st St Ste 10',
       line2: 'Bronx, NY 10451',
       street_address_1: 'One East 161st St',
-      street_address_2: 'Suite 10'
+      street_address_2: 'Ste 10'
     },
     'P.O. Box 280568 Queens Village, New York 11428' => {
       line1: 'PO Box 280568',
@@ -235,140 +236,148 @@ class AddressTest < MiniTest::Test
       line1: '233 S Wacker Dr Lbby',
       line2: '60606'
     }
-    # FIXME
-    # "(233 S Wacker Dr lobby 60606)" => {
-    # :line1 => "233 S Wacker Dr Lobby",
-    #   :line2 => ""}
   }.freeze
 
-  def test_line1_with_valid_addresses
+  describe '#line_1' do
     ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      assert_equal expected[:line1], addr.line1
+      it "with valid address: #{address}" do
+        addr = StreetAddress::US.parse(address)
+        expect(addr.line1).to eq(expected[:line1])
+      end
     end
-  end
 
-  def test_line1_with_intersections
     INTERSECTIONS.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      assert_equal expected[:line1], addr.line1
+      it "with intersection: #{address}" do
+        addr = StreetAddress::US.parse(address)
+        expect(addr.line1).to eq(expected[:line1])
+      end
     end
-  end
 
-  def test_line1_with_informal_addresses
     INFORMAL_ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse_informal_address(address)
-      assert_equal addr.line1, expected[:line1]
+      it "with informal address: #{address}" do
+        informal_addr = StreetAddress::US.parse_informal_address(address)
+        expect(informal_addr.line1).to eq(expected[:line1])
+      end
     end
   end
 
-  def test_line2_with_valid_addresses
+  describe '#line2' do
     ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      assert_equal addr.line2, expected[:line2]
+      it "with valid address: #{address}" do
+        addr = StreetAddress::US.parse(address)
+        expect(addr.line2).to eq(expected[:line2])
+      end
     end
-  end
 
-  def test_line2_with_intersections
     INTERSECTIONS.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      assert_equal addr.line2, expected[:line2]
+      it "with intersection: #{address}" do
+        addr = StreetAddress::US.parse(address)
+        expect(addr.line2).to eq(expected[:line2])
+      end
     end
-  end
 
-  def test_line2_with_informal_addresses
     INFORMAL_ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse_informal_address(address)
-      assert_equal addr.line2, expected[:line2]
+      it "with informal address: #{address}" do
+        informal_addr = StreetAddress::US.parse_informal_address(address)
+        expect(informal_addr.line2).to eq(expected[:line2])
+      end
     end
   end
 
-  def test_to_s_with_valid_addresses
+  describe '#to_s' do
     ADDRESSES.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      expected_result = expected[:to_s]
-      expected_result ||= [expected[:line1], expected[:line2]].reject(&:empty?).join(', ')
-      assert_equal expected_result, addr.to_s
+      it "with valid address: #{address}" do
+        expected_result = expected[:to_s]
+        expected_result ||= [expected[:line1], expected[:line2]].reject(&:empty?).join(', ')
+        addr = StreetAddress::US.parse(address)
+        expect(addr.to_s).to eq(expected_result)
+      end
     end
-  end
 
-  def test_to_s_with_intersections
     INTERSECTIONS.each_pair do |address, expected|
-      addr = StreetAddress::US.parse(address)
-      expected_result = expected[:to_s]
-      expected_result ||= [expected[:line1], expected[:line2]].reject(&:empty?).join(', ')
-      assert_equal addr.to_s, expected_result
+      it "with intersection: #{address}" do
+        expected_result = expected[:to_s]
+        expected_result ||= [expected[:line1], expected[:line2]].reject(&:empty?).join(', ')
+        addr = StreetAddress::US.parse(address)
+        expect(addr.to_s).to eq(expected_result)
+      end
     end
-  end
 
-  def test_to_s_with_informal_addresses
     INFORMAL_ADDRESSES.each_pair do |address, expected|
+      it "with informal address: #{address}" do
+        expected_result = expected[:to_s]
+        expected_result ||= [expected[:line1], expected[:line2]].reject(&:empty?).join(', ')
+        informal_addr = StreetAddress::US.parse_informal_address(address)
+        expect(informal_addr.to_s).to eq(expected_result)
+      end
+    end
+
+    it 'with no line2' do
+      address = '45 Quaker Ave, Ste 105'
       addr = StreetAddress::US.parse(address)
-      expected_result = expected[:to_s]
-      expected_result ||= [expected[:line1], expected[:line2]].reject(&:empty?).join(', ')
-      assert_equal addr.to_s, expected_result
+      expect(addr.to_s).to eq('45 Quaker Ave Ste 105')
+    end
+
+    it 'with valid addresses with zip_ext' do
+      address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s).to eq('7800 Mill Station Rd, Sebastopol, CA 95472-1234')
+    end
+
+    it 'with option [:line1]' do
+      address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s(:line1)).to eq('7800 Mill Station Rd')
+    end
+
+    it 'with option [:line2]' do
+      address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s(:line2)).to eq('Sebastopol, CA 95472-1234')
+    end
+
+    it 'with option [:street_address_1]' do
+      address = '7800 Mill Station Rd, Apt. 7B, Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s(:street_address_1)).to eq('7800 Mill Station Rd')
+    end
+
+    it 'with option [:street_address_2]' do
+      address = '7800 Mill Station Rd, Apartment. 7B, Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s(:street_address_2)).to eq('Apt 7B')
+    end
+
+    it 'with option [:city_state_zip]' do
+      address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s(:city_state_zip)).to eq('Sebastopol, CA 95472-1234')
+    end
+
+    it 'with option [:line1] and a PO Box' do
+      address = 'PO 7800 Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.to_s(:line1)).to eq('PO 7800')
     end
   end
 
-  def test_to_s_with_no_line2
-    address = '45 Quaker Ave, Ste 105'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s, '45 Quaker Ave Ste 105'
-  end
+  describe '#full_postal_code' do
+    it 'with a full postal code' do
+      address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.full_postal_code).to eq('95472-1234')
+    end
 
-  def test_to_s_with_valid_addresses_with_zip_ext
-    address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s, '7800 Mill Station Rd, Sebastopol, CA 95472-1234'
-  end
+    it 'with only the first five' do
+      address = '7800 Mill Station Rd Sebastopol CA 95472'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.full_postal_code).to eq('95472')
+    end
 
-  def test_to_s_for_line1
-    address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s(:line1), addr.line1
-  end
-
-  def test_to_s_for_line2
-    address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s(:line2), addr.line2
-  end
-
-  def test_to_s_for_street_address_1
-    address = '7800 Mill Station Rd, Apt. 7B, Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s(:street_address_1), '7800 Mill Station Rd'
-  end
-
-  def test_to_s_for_street_address_2
-    address = '7800 Mill Station Rd, Apt. 7B, Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s(:street_address_2), 'Apt 7B'
-  end
-
-  def test_to_s_for_city_state_zip
-    address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal addr.to_s(:line2), addr.line2
-  end
-
-  def test_to_s_for_PO_box
-    address = 'PO 7800 Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal 'PO 7800', addr.to_s(:line1)
-  end
-
-  def test_full_postal_code
-    address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
-    addr = StreetAddress::US.parse(address)
-    assert_equal '95472-1234', addr.full_postal_code
-
-    address = '7800 Mill Station Rd Sebastopol CA 95472'
-    addr = StreetAddress::US.parse(address)
-    assert_equal '95472', addr.full_postal_code
-
-    address = '7800 Mill Station Rd Sebastopol CA'
-    addr = StreetAddress::US.parse(address)
-    assert_nil addr.full_postal_code
+    it 'no postal code' do
+      address = '7800 Mill Station Rd Sebastopol CA'
+      addr = StreetAddress::US.parse(address)
+      expect(addr.full_postal_code).to be_nil
+    end
   end
 end

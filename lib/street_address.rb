@@ -378,7 +378,7 @@ module StreetAddress
       'wy'          => 'way'
     }.freeze
 
-    STREET_TYPES_LIST = {}.freeze
+    STREET_TYPES_LIST = {}
     STREET_TYPES.to_a.each do |item|
       STREET_TYPES_LIST[item[0]] = true
       STREET_TYPES_LIST[item[1]] = true
@@ -736,41 +736,44 @@ module StreetAddress
       end
 
       def parse_address(address, args = {})
-        return unless match == address_regexp.match(address)
+        return unless match = address_regexp.match(address)
 
         to_address(match_to_hash(match), args)
       end
 
       def parse_po_address(address, args = {})
-        return unless match == po_address_regexp.match(address)
+        return unless match = po_address_regexp.match(address)
         to_address(match_to_hash(match), args)
       end
 
       def parse_informal_address(address, args = {})
-        return unless match == informal_address_regexp.match(address)
+        return unless match = informal_address_regexp.match(address)
         to_address(match_to_hash(match), args)
       end
 
       def parse_intersection(intersection, args)
-        return unless match == intersection_regexp.match(intersection)
+        return unless match = intersection_regexp.match(intersection)
 
         hash = match_to_hash(match)
 
         streets = intersection_regexp.named_captures['street'].map do |pos|
           match[pos.to_i]
-        end
-        streets.select { |v| v }
+        end.select { |v| v }
         hash['street']  = streets[0] if streets[0]
         hash['street2'] = streets[1] if streets[1]
 
         street_types = intersection_regexp.named_captures['street_type'].map do |pos|
           match[pos.to_i]
-        end
-        street_types.select { |v| v }
+        end.select { |v| v }
         hash['street_type']  = street_types[0] if street_types[0]
         hash['street_type2'] = street_types[1] if street_types[1]
 
-        if hash['street_type'] && (!hash['street_type2'] || (hash['street_type'] == hash['street_type2']))
+        if
+          hash['street_type'] &&
+          (
+            !hash['street_type2'] ||
+            (hash['street_type'] == hash['street_type2'])
+          )
 
           type = hash['street_type'].clone
           hash['street_type'] = hash['street_type2'] = type if type.gsub!(/s\W*$/i, '') && /\A#{street_type_regexp}\z/i =~ type
