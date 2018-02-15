@@ -312,7 +312,7 @@ RSpec.describe StreetAddress::US::Address do
       end
     end
 
-    it 'with no line2' do
+    it 'without line2 value' do
       address = '45 Quaker Ave, Ste 105'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s).to eq('45 Quaker Ave Ste 105')
@@ -324,37 +324,37 @@ RSpec.describe StreetAddress::US::Address do
       expect(addr.to_s).to eq('7800 Mill Station Rd, Sebastopol, CA 95472-1234')
     end
 
-    it 'with option [:line1]' do
+    it '[:line1]' do
       address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s(:line1)).to eq('7800 Mill Station Rd')
     end
 
-    it 'with option [:line2]' do
+    it '[:line2]' do
       address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s(:line2)).to eq('Sebastopol, CA 95472-1234')
     end
 
-    it 'with option [:street_address_1]' do
+    it '[:street_address_1]' do
       address = '7800 Mill Station Rd, Apt. 7B, Sebastopol CA 95472-1234'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s(:street_address_1)).to eq('7800 Mill Station Rd')
     end
 
-    it 'with option [:street_address_2]' do
+    it '[:street_address_2]' do
       address = '7800 Mill Station Rd, Apartment. 7B, Sebastopol CA 95472-1234'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s(:street_address_2)).to eq('Apt 7B')
     end
 
-    it 'with option [:city_state_zip]' do
+    it '[:city_state_zip]' do
       address = '7800 Mill Station Rd Sebastopol CA 95472-1234'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s(:city_state_zip)).to eq('Sebastopol, CA 95472-1234')
     end
 
-    it 'with option [:line1] and a PO Box' do
+    it '[:line1] and a PO Box' do
       address = 'PO 7800 Sebastopol CA 95472-1234'
       addr = StreetAddress::US.parse(address)
       expect(addr.to_s(:line1)).to eq('PO 7800')
@@ -373,11 +373,23 @@ RSpec.describe StreetAddress::US::Address do
       addr = StreetAddress::US.parse(address)
       expect(addr.full_postal_code).to eq('95472')
     end
+  end
 
+  describe '#postal_code_ext' do
     it 'no postal code' do
       address = '7800 Mill Station Rd Sebastopol CA'
       addr = StreetAddress::US.parse(address)
       expect(addr.full_postal_code).to be_nil
+    end
+
+    it 'with valid zip plus 4 with dash' do
+      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 22206-3333')
+      expect(addr.postal_code_ext).to eq('3333')
+    end
+
+    it 'with valid zip plus 4 without dash' do
+      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444')
+      expect(addr.postal_code_ext).to eq('4444')
     end
   end
 end

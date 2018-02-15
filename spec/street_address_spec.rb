@@ -557,25 +557,15 @@ RSpec.describe StreetAddress::US do
       end
     end
 
-    it 'with valid zip plus 4 with dash' do
-      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 22206-3333')
-      expect(addr.postal_code_ext).to eq('3333')
-    end
-
-    it 'with valid zip plus 4 without dash' do
-      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444')
-      expect(addr.postal_code_ext).to eq('4444')
-    end
-
     it 'with invalid addresses' do
       EXPECTED_FAILURES.each do |address|
         parsed_address = StreetAddress::US.parse(address)
-        expect(parsed_address).not_to eq(parsed_address.state)
+        expect(parsed_address).not_to eq(address)
       end
     end
 
-    context 'avoid_redundant_street_type: true' do
-      it 'street_type_is_nil_for_road_redundant_street_types' do
+    context 'with avoid_redundant_street_type: true' do
+      it 'ensures street type is nil for road redundant street types' do
         address = '36401 County Road 43, Eaton, CO 80615'
         expected_results = {
           number: '36401',
@@ -621,7 +611,7 @@ RSpec.describe StreetAddress::US do
     end
   end
 
-  def compare_expected_to_actual_hash(expected, actual, _address)
+  def compare_expected_to_actual_hash(expected, actual, address)
     expected.each_pair do |expected_key, expected_value|
       expect(actual[expected_key]).to eq(expected_value)
     end
