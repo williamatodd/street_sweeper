@@ -384,6 +384,18 @@ module StreetAddress
       STREET_TYPES_LIST[item[1]] = true
     end
 
+    NUMERIC_STREET_NAMES = {
+      'first'   => '1st',
+      'second'  => '2nd',
+      'third'   => '3rd',
+      'fourth'  => '4th',
+      'fifth'   => '5th',
+      'sixth'   => '6th',
+      'seventh' => '7th',
+      'eighth'  => '8th',
+      'ninth'   => '9th'
+    }.freeze
+
     UNIT_ABBREVIATIONS_NUMBERED = {
       /(?:ap|dep)(?:ar)?t(?:me?nt)?/i => 'Apt',
       /box/i => 'Box',
@@ -549,10 +561,9 @@ module StreetAddress
       'street_type'  => STREET_TYPES,
       'street_type1' => STREET_TYPES,
       'street_type2' => STREET_TYPES,
+      'street' => NUMERIC_STREET_NAMES,
       'state' => STATE_CODES
     }.freeze
-
-    STREET_NUMBER_WORDS = %(one two three four five six seven eight nine ten).freeze
 
     class << self
       attr_accessor(
@@ -782,7 +793,7 @@ module StreetAddress
 
       def match_to_hash(matched)
         hash = {}
-        matched.names.each { |name| hash[name] = matched[name] if matched[name] }
+        matched.names.each { |name| hash[name] = matched[name] if matched[name] && !matched[name].strip.empty? }
         hash
       end
 
@@ -801,8 +812,10 @@ module StreetAddress
         end
 
         ## abbreviate unit prefixes
-        UNIT_ABBREVIATIONS.each_pair do |regex, abbr|
-          regex.match(input['unit_prefix']) { |_m| input['unit_prefix'] = abbr }
+        if input['unit_prefix']
+          UNIT_ABBREVIATIONS.each_pair do |regex, abbr|
+            regex.match(input['unit_prefix']) { |_m| input['unit_prefix'] = abbr }
+          end
         end
 
         NORMALIZE_MAP.each_pair do |key, map|
@@ -829,7 +842,7 @@ module StreetAddress
           end
         end
 
-        %w[street street_type street2 street_type2 city unit_prefix postal_code].each do |k|
+        %w[street street_type street2 street_type2 city unit_prefix].each do |k|
           input[k] = input[k].split.map { |elem| upcase_or_capitalize(elem) }.join(' ') if input[k]
         end
 
@@ -885,79 +898,54 @@ module StreetAddress
         !street2.nil?
       end
 
-      def line1(s = '')
+      def line1
         parts = []
         if intersection?
           parts << prefix if prefix
           parts << street
-          parts << street_type  if street_type
-          parts << suffix       if suffix
+          parts << street_type if street_type
+          parts << suffix if suffix
           parts << 'and'
           parts << prefix2 if prefix2
           parts << street2
           parts << street_type2 if street_type2
-          parts << suffix2      if suffix2
+          parts << suffix2 if suffix2
         else
-          parts << number
-          parts << prefix if prefix
-          parts << street if street
-          parts << street_type if street_type && !redundant_street_type
-          parts << suffix if suffix
-          parts << unit_prefix if unit_prefix
-          # follow guidelines: http://pe.usps.gov/cpim/ftp/pubs/Pub28/pub28.pdf pg28
-          parts << (unit_prefix ? unit : "\# #{unit}") if unit
+          parts << street_address_1
+          parts << street_address_2
         end
-        s + parts.join(' ').strip
+        parts.join(' ').strip
       end
 
-      def line2(s = '')
+      def line2
         parts = []
         parts << city  if city
         parts << state if state
-        s += parts.join(', ')
-        if postal_code
-          s << " #{postal_code}"
-          s << "-#{postal_code_ext}" if postal_code_ext
-        end
+        s = parts.join(', ')
+        s += " #{full_postal_code}" if full_postal_code
         s.strip
       end
 
-      def street_address_1(s = '')
-        return line1(s) if intersection?
+      def street_address_1
+        return line1 if intersection?
         parts = []
         parts << number
         parts << prefix if prefix
         parts << street if street
         parts << street_type if street_type && !redundant_street_type
         parts << suffix if suffix
-        s + parts.join(' ').strip
+        parts.join(' ').strip
       end
 
-      def street_address_2(s = '')
-        return s if intersection?
+      def street_address_2
         parts = []
         parts << unit_prefix if unit_prefix
         parts << (unit_prefix ? unit : "\# #{unit}") if unit
-        s + parts.join(' ').strip
+        parts.join(' ').strip
       end
 
-      def to_s(format = :default)
-        s = ''
-        s << case format
-             when :line1
-               line1(s)
-             when :line2
-               line2(s)
-             when :street_address_1
-               street_address_1(s)
-             when :street_address_2
-               street_address_2(s)
-             when :city_state_zip
-               line2(s)
-             else
-               [line1, line2].reject(&:empty?).join(', ')
-             end
-        s
+      def full_street_address
+        [line1, line2].reject(&:empty?).join(', ')
       end
 
       def to_h

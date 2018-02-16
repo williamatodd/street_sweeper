@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe StreetAddress::US do
-  ADDRESSES = {
+  NORMAL = {
     '1005 Gravenstein Hwy 95472' => {
       number: '1005',
       street: 'Gravenstein',
@@ -215,7 +215,7 @@ RSpec.describe StreetAddress::US do
     },
     '1 First St, e San Jose CA' => { # lower case city direction
       number: '1',
-      street: 'First',
+      street: '1st',
       state: 'CA',
       city: 'East San Jose',
       street_type: 'St'
@@ -387,7 +387,7 @@ RSpec.describe StreetAddress::US do
     }
   }.freeze
 
-  INTERSECTIONS = {
+  PARSEABLE_INTERSECTIONS = {
     'Mission & Valencia San Francisco CA' => {
       street_type: nil,
       street_type2: nil,
@@ -463,7 +463,7 @@ RSpec.describe StreetAddress::US do
     }
   }.freeze
 
-  INFORMAL_ADDRESSES = {
+  INFORMAL = {
     '#42 233 S Wacker Dr 60606' => {
       number: '233',
       postal_code: '60606',
@@ -533,42 +533,40 @@ RSpec.describe StreetAddress::US do
     'E1005 Gravenstein Hwy 95472'
   ].freeze
 
+  ACCESSIBLE_ATTRIBUTES = %w[number street street_type unit unit_prefix suffix
+                             prefix city state postal_code postal_code_ext
+                             street2 street_type2 suffix2 prefix2].freeze
+
+  ADDRESSES = NORMAL.merge(INFORMAL)
+  ALL_ADDRESSES = ADDRESSES.merge(PARSEABLE_INTERSECTIONS)
+
+  describe '#parse_address' do
+    EXPECTED_FAILURES.each do |address|
+      context address.to_s do
+        it 'returns nil' do
+          expect(StreetAddress::US.parse_address(address)).to be_nil
+        end
+      end
+    end
+  end
+
   describe '#parse' do
-    context 'default settings' do
-      ADDRESSES.each_pair do |address, expected|
-        context "receiving a valid address: #{address}" do
-          let(:parsed_address) { StreetAddress::US.parse(address) }
-
-          it 'parses the input' do
-            compare_expected_to_actual_hash(expected, parsed_address.to_h, address)
-          end
-        end
-      end
-
-      INTERSECTIONS.each_pair do |address, expected|
-        context "receiving a valid intersection: #{address}" do
-          let(:parsed_address) { StreetAddress::US.parse(address) }
-
-          it 'parses the input' do
-            compare_expected_to_actual_hash(expected, parsed_address.to_h, address)
-          end
-        end
-      end
-
-      EXPECTED_FAILURES.each do |address|
-        context "receiving a invalid address: #{address}" do
-          let(:parsed_address) { StreetAddress::US.parse(address) }
-
-          it 'does not parse the input' do
-            expect(parsed_address).to_not eq(address)
+    context 'with default settings' do
+      ALL_ADDRESSES.each_pair do |address, expected|
+        context address.to_s do
+          ACCESSIBLE_ATTRIBUTES.each do |attribute|
+            next if expected[attribute.to_sym].to_s == ''
+            it "#{attribute}: #{expected[attribute.to_sym]}" do
+              compare_expected_to_actual(expected, address, attribute)
+            end
           end
         end
       end
     end
 
     context 'avoid_redundant_street_type: true' do
-      context 'receiving a valid road redundant street type address' do
-        it 'parses the input returning street_type: nil' do
+      context '36401 County Road 43, Eaton, CO 80615' do
+        it 'returns street_type: nil' do
           address = '36401 County Road 43, Eaton, CO 80615'
           expected_results = {
             number: '36401',
@@ -585,12 +583,13 @@ RSpec.describe StreetAddress::US do
     end
 
     context 'informal: true' do
-      INFORMAL_ADDRESSES.each_pair do |address, expected|
-        context "receiving a valid informal address: #{address}" do
-          let(:parsed_address) { StreetAddress::US.parse(address, informal: true) }
-
-          it 'parses the input' do
-            compare_expected_to_actual_hash(expected, parsed_address.to_h, address)
+      ALL_ADDRESSES.each_pair do |address, expected|
+        context address.to_s do
+          ACCESSIBLE_ATTRIBUTES.each do |attribute|
+            next if expected[attribute.to_sym].to_s == ''
+            it "#{attribute}: #{expected[attribute.to_sym]}" do
+              compare_expected_to_actual(expected, address, attribute, true)
+            end
           end
         end
       end
@@ -629,5 +628,10 @@ RSpec.describe StreetAddress::US do
     expected.each_pair do |expected_key, expected_value|
       expect(actual[expected_key]).to eq(expected_value)
     end
+  end
+
+  def compare_expected_to_actual(expected, address, attribute, informal = false, redundant = false)
+    addr = StreetAddress::US.parse(address, informal: informal, avoid_redundant_street_type: redundant)
+    expect(addr.send(attribute)).to eq(expected[attribute.to_sym])
   end
 end
