@@ -1,10 +1,6 @@
-require 'rake/testtask'
+require 'rspec/core/rake_task'
 
-Rake::TestTask.new do |t|
-  t.libs << %w(test lib)
-  t.pattern = 'test/**/*_test.rb'
-end
+RSpec::Core::RakeTask.new(:spec)
 
-
-desc "Run tests"
-task :default => :test
+# If you want to make this the default task
+task default: :spec

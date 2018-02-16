@@ -9,3 +9,8 @@ Gemfile.lock
 *~
 *.old
 *.tar.gz
+tmp
+coverage
+doc
+pkg
+spec/reports
