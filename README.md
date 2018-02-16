@@ -1,5 +1,4 @@
-![Gem Version](http://img.shields.io/gem/v/StreetAddress.svg)
-![Build Status](https://circleci.com/gh/derrek/street-address.svg?style=shield)
+[![Build Status](https://travis-ci.org/williamatodd/street-address.svg?branch=master)](https://travis-ci.org/williamatodd/street-address)
 
 # DESCRIPTION
 
