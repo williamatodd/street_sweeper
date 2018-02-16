@@ -719,9 +719,7 @@ module StreetAddress
     self.intersection_regexp = /\A\W*
       #{street_regexp}\W*?
       \s+#{corner_regexp}\s+
-#          (?{ exists $_{$_} and $_{$_.1} = delete $_{$_} for (qw{prefix street type suffix})})
       #{street_regexp}\W+
-#          (?{ exists $_{$_} and $_{$_.2} = delete $_{$_} for (qw{prefix street type suffix})})
       #{place_regexp}
       \W*\z
     /ix
@@ -736,45 +734,43 @@ module StreetAddress
       end
 
       def parse_address(address, args = {})
-        return unless match = address_regexp.match(address)
-
-        to_address(match_to_hash(match), args)
+        matched = address_regexp.match(address)
+        return unless matched
+        to_address(match_to_hash(matched), args)
       end
 
       def parse_po_address(address, args = {})
-        return unless match = po_address_regexp.match(address)
-        to_address(match_to_hash(match), args)
+        matched = po_address_regexp.match(address)
+        return unless matched
+        to_address(match_to_hash(matched), args)
       end
 
       def parse_informal_address(address, args = {})
-        return unless match = informal_address_regexp.match(address)
-        to_address(match_to_hash(match), args)
+        matched = informal_address_regexp.match(address)
+        return unless matched
+        to_address(match_to_hash(matched), args)
       end
 
       def parse_intersection(intersection, args)
-        return unless match = intersection_regexp.match(intersection)
-
-        hash = match_to_hash(match)
+        matched = intersection_regexp.match(intersection)
+        return unless matched
+        hash = match_to_hash(matched)
 
         streets = intersection_regexp.named_captures['street'].map do |pos|
-          match[pos.to_i]
+          matched[pos.to_i]
         end.select { |v| v }
+
         hash['street']  = streets[0] if streets[0]
         hash['street2'] = streets[1] if streets[1]
 
         street_types = intersection_regexp.named_captures['street_type'].map do |pos|
-          match[pos.to_i]
+          matched[pos.to_i]
         end.select { |v| v }
+
         hash['street_type']  = street_types[0] if street_types[0]
         hash['street_type2'] = street_types[1] if street_types[1]
 
-        if
-          hash['street_type'] &&
-          (
-            !hash['street_type2'] ||
-            (hash['street_type'] == hash['street_type2'])
-          )
-
+        if hash['street_type'] && (!hash['street_type2'] || (hash['street_type'] == hash['street_type2']))
           type = hash['street_type'].clone
           hash['street_type'] = hash['street_type2'] = type if type.gsub!(/s\W*$/i, '') && /\A#{street_type_regexp}\z/i =~ type
         end
@@ -784,9 +780,9 @@ module StreetAddress
 
       private
 
-      def match_to_hash(match)
+      def match_to_hash(matched)
         hash = {}
-        match.names.each { |name| hash[name] = match[name] if match[name] }
+        matched.names.each { |name| hash[name] = matched[name] if matched[name] }
         hash
       end
 
@@ -799,8 +795,8 @@ module StreetAddress
 
         input['redundant_street_type'] = false
         if input['street'] && !input['street_type']
-          match = street_regexp.match(input['street'])
-          input['street_type'] = match['street_type']
+          matched = street_regexp.match(input['street'])
+          input['street_type'] = matched['street_type']
           input['redundant_street_type'] = true
         end
 
@@ -821,7 +817,7 @@ module StreetAddress
             type   = input['street_type' + suffix]
             next if !street || !type
 
-            type_regexp = street_type_matches[type.downcase] # || fail "No STREET_TYPE_MATCH for #{type}"
+            type_regexp = street_type_matches[type.downcase]
             input.delete('street_type' + suffix) if type_regexp.match(street)
           end
         end
@@ -927,6 +923,7 @@ module StreetAddress
       end
 
       def street_address_1(s = '')
+        return line1(s) if intersection?
         parts = []
         parts << number
         parts << prefix if prefix
@@ -937,6 +934,7 @@ module StreetAddress
       end
 
       def street_address_2(s = '')
+        return s if intersection?
         parts = []
         parts << unit_prefix if unit_prefix
         parts << (unit_prefix ? unit : "\# #{unit}") if unit
@@ -968,10 +966,6 @@ module StreetAddress
           hash_name = var_name[1..-1].to_sym
           hash[hash_name] = var_value
         end
-      end
-
-      def ==(other)
-        to_s == other.to_s
       end
     end
   end
