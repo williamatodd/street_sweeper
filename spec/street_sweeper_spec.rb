@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe StreetAddress::US do
+RSpec.describe StreetSweeper do
   NORMAL = {
     '1005 Gravenstein Hwy 95472' => {
       number: '1005',
@@ -544,7 +544,7 @@ RSpec.describe StreetAddress::US do
     EXPECTED_FAILURES.each do |address|
       context address.to_s do
         it 'returns nil' do
-          expect(StreetAddress::US.parse_address(address)).to be_nil
+          expect(StreetSweeper.parse_address(address)).to be_nil
         end
       end
     end
@@ -576,7 +576,7 @@ RSpec.describe StreetAddress::US do
             postal_code: '80615',
             street_type: nil
           }
-          parsed_address = StreetAddress::US.parse(address, avoid_redundant_street_type: true)
+          parsed_address = StreetSweeper.parse(address, avoid_redundant_street_type: true)
           compare_expected_to_actual_hash(expected_results, parsed_address.to_h, address)
         end
       end
@@ -595,7 +595,7 @@ RSpec.describe StreetAddress::US do
       end
 
       it 'receiving a valid standard address, parses the input' do
-        a = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444', informal: true)
+        a = StreetSweeper.parse('2730 S Veitch St, Arlington, VA 222064444', informal: true)
         expect(a.number).to eq('2730')
         expect(a.prefix).to eq('S')
         expect(a.street).to eq('Veitch')
@@ -607,7 +607,7 @@ RSpec.describe StreetAddress::US do
       end
 
       it 'receiving a valid informal address, parses the input' do
-        a = StreetAddress::US.parse('2730 S Veitch St', informal: true)
+        a = StreetSweeper.parse('2730 S Veitch St', informal: true)
         expect(a.number).to eq('2730')
         expect(a.prefix).to eq('S')
         expect(a.street).to eq('Veitch')
@@ -615,7 +615,7 @@ RSpec.describe StreetAddress::US do
       end
 
       it 'receiving a valid informal address with trailing words, parses the input' do
-        a = StreetAddress::US.parse('2730 S Veitch St in the south of arlington', informal: true)
+        a = StreetSweeper.parse('2730 S Veitch St in the south of arlington', informal: true)
         expect(a.number).to eq('2730')
         expect(a.prefix).to eq('S')
         expect(a.street).to eq('Veitch')
@@ -631,7 +631,7 @@ RSpec.describe StreetAddress::US do
   end
 
   def compare_expected_to_actual(expected, address, attribute, informal = false, redundant = false)
-    addr = StreetAddress::US.parse(address, informal: informal, avoid_redundant_street_type: redundant)
+    addr = StreetSweeper.parse(address, informal: informal, avoid_redundant_street_type: redundant)
     expect(addr.send(attribute)).to eq(expected[attribute.to_sym])
   end
 end

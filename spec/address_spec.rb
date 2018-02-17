@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe StreetAddress::US::Address do
+RSpec.describe StreetSweeper::Address do
   NORMAL_ADDRESSES = {
     '1005 Gravenstein Hwy 95472' => {
       line1: '1005 Gravenstein Hwy',
@@ -462,69 +462,69 @@ RSpec.describe StreetAddress::US::Address do
 
   describe '#full_postal_code' do
     it 'without postal code' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol CA')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol CA')
       expect(addr.full_postal_code).to be_nil
     end
 
     it 'with only the first five digits' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol CA 95472')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol CA 95472')
       expect(addr.full_postal_code).to eq('95472')
     end
 
     it 'with valid zip plus 4 with dash' do
-      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 22206-3333')
+      addr = StreetSweeper.parse('2730 S Veitch St, Arlington, VA 22206-3333')
       expect(addr.full_postal_code).to eq('22206-3333')
     end
 
     it 'with valid zip plus 4 without dash' do
-      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444')
+      addr = StreetSweeper.parse('2730 S Veitch St, Arlington, VA 222064444')
       expect(addr.full_postal_code).to eq('22206-4444')
     end
   end
 
   describe '#postal_code_ext' do
     it 'without postal code' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol CA')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol CA')
       expect(addr.full_postal_code).to be_nil
     end
 
     it 'with valid zip plus 4 with dash' do
-      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 22206-3333')
+      addr = StreetSweeper.parse('2730 S Veitch St, Arlington, VA 22206-3333')
       expect(addr.postal_code_ext).to eq('3333')
     end
 
     it 'with valid zip plus 4 without dash' do
-      addr = StreetAddress::US.parse('2730 S Veitch St, Arlington, VA 222064444')
+      addr = StreetSweeper.parse('2730 S Veitch St, Arlington, VA 222064444')
       expect(addr.postal_code_ext).to eq('4444')
     end
   end
 
   describe '#state_name' do
     it 'with a vaild address' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol CA 95472')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol CA 95472')
       expect(addr.state_name).to eq('California')
     end
 
     it 'with an invaild address' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol 95472')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol 95472')
       expect(addr.state_name).to be_nil
     end
   end
 
   describe '#state_fips' do
     it 'with a vaild address' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol CA 95472')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol CA 95472')
       expect(addr.state_fips).to eq('06')
     end
 
     it 'with an invaild address' do
-      addr = StreetAddress::US.parse('7800 Mill Station Rd Sebastopol 95472')
+      addr = StreetSweeper.parse('7800 Mill Station Rd Sebastopol 95472')
       expect(addr.state_fips).to be_nil
     end
   end
 
   def compare_expected_to_actual(expected, address, method_name)
-    addr = StreetAddress::US.parse(address)
+    addr = StreetSweeper.parse(address)
     expect(addr.send(method_name)).to eq(expected[method_name.to_sym])
   end
 end
