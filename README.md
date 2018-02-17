@@ -65,6 +65,6 @@ or from Gemfile
 ```
 
 ## License
-The [MIT Licencse](http://opensource.org/licenses/MIT)
+The [MIT License](http://opensource.org/licenses/MIT)
 
 Copyright (c) 2007-2018 Contributors
