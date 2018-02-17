@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/williamatodd/street_sweeper.svg?branch=master)](https://travis-ci.org/williamatodd/street_sweeper)
-
+[![Gem Version](https://badge.fury.io/rb/street_sweeper.svg)](https://badge.fury.io/rb/street_sweeper)
 # DESCRIPTION
 
 Parses a string returning a normalized Address object. When the string is not an US address it returns nil.
