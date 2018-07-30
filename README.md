@@ -4,7 +4,7 @@
 
 Parses a string returning a normalized Address object. When the string is not an US address it returns nil.
 
-This is a resurrected fork of [StreetSweeper::US](https://github.com/street-address-rb/street-address) which was itself a port of the perl module [Geo::StreetSweeper](https://github.com/timbunce/Geo-StreetAddress-US) originally written by Schuyler D. Erle.
+This is a resurrected fork of [StreetSweeper::US](https://github.com/street-address-rb/street-address) which was itself a port of the perl module [Geo::StreetAddress::US](https://github.com/timbunce/Geo-StreetAddress-US) originally written by Schuyler D. Erle.
 
 ## Installation
 
