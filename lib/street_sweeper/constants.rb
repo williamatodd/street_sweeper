@@ -120,7 +120,7 @@ module StreetSweeper
       'extensions'  => 'exts',
       'extn'        => 'ext',
       'extnsn'      => 'ext',
-      'falls'       => 'fls',
+      # 'falls'       => 'fls',
       'ferry'       => 'fry',
       'field'       => 'fld',
       'fields'      => 'flds',
