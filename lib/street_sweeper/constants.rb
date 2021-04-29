@@ -200,7 +200,7 @@ module StreetSweeper
       'knoll'       => 'knl',
       'knolls'      => 'knls',
       'la'          => 'ln',
-      'lake'        => 'lk',
+      # 'lake'        => 'lk',
       'lakes'       => 'lks',
       'landing'     => 'lndg',
       'lane'        => 'ln',
